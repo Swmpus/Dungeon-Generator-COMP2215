@@ -1,16 +1,25 @@
-/*
-    WHOLE PROGRAM VERY SLOW CAUSE LOTS OF MEMORY BEING COPIED
-*/
-#include <stdio.h>
+#include <avr/io.h>
+#include "lcd.h"
+
 #include <stdlib.h>
 #include <stdbool.h>
 #include <time.h>
 
-#define MAP_WIDTH 101 // Minimum recommended is 20
-#define MAP_HEIGHT 101 // Minimum recommended is 20
-#define MAX_ROOM_WIDTH 10 // Minimum 5
-#define MAX_ROOM_HEIGHT 10 // Minimum 5
-#define ATTEMPTS_ROOM 50
+
+
+
+
+#define BUFFSIZE 256
+
+
+
+
+
+#define MAP_WIDTH 52 // Minimum recommended is 20
+#define MAP_HEIGHT 28 // Minimum recommended is 20
+#define MAX_ROOM_WIDTH 5 // Minimum 5
+#define MAX_ROOM_HEIGHT 5 // Minimum 5
+#define ATTEMPTS_ROOM 1000
 
 #define GAME_EMPTY 1
 #define GAME_WALL 2
@@ -37,56 +46,59 @@ void printMap(int* map);
 
 int main()
 {
+    CLKPR = (1 << CLKPCE);
+    CLKPR = 0;
+    init_lcd();
+
     int* map = (int*)malloc(MAP_HEIGHT * MAP_WIDTH * sizeof(int));
 
     srand(time(NULL));
     generateMap(map);
 
-    printf("Map Generated\n");
-
     int roomAttempts = ATTEMPTS_ROOM;
-
+    
     while (roomAttempts > 0) {
-        int roomStartX = generateRandomNum(3, MAP_WIDTH - 3 - MAX_ROOM_WIDTH);
+        int roomStartX = generateRandomNum(3, MAP_WIDTH - 7);
         int roomEndX = roomStartX;
-        int roomStartY = generateRandomNum(3, MAP_HEIGHT - 3 - MAX_ROOM_HEIGHT);
+        int roomStartY = generateRandomNum(3, MAP_HEIGHT - 7);
         int roomEndY = roomStartY;
 
         do {
             roomEndX = abs(generateRandomNum(roomStartX + 3, roomStartX + MAX_ROOM_WIDTH));
-        } while (roomEndX >= MAP_WIDTH - 3);
+        } while (roomEndX > MAP_WIDTH - 3);
         do {
             roomEndY = abs(generateRandomNum(roomStartY + 3, roomStartY + MAX_ROOM_HEIGHT));
-        } while (roomEndY >= MAP_HEIGHT - 3);
+        } while (roomEndY > MAP_HEIGHT - 3);
 
-        printf("Start: %d, %d; End %d, %d\n", roomStartX, roomEndX, roomStartY, roomEndY);
         if (checkRoom(map, roomStartX, roomStartY, roomEndX, roomEndY)) {
             drawRoom(map, roomStartX, roomStartY, roomEndX, roomEndY);
         }
-        roomAttempts--;
+        roomAttempts--; 
+    }
+
+    if (checkRoom(map, 40, 40, 50, 46)) {
+        drawRoom(map, 45, 41, 50, 46);
     }
     printMap(map);
-    printf("Map Printed\n");
-    
     free(map);
     return 0;
 }
 
 void printMap(int* map)
 {
-    for (int i = 0; i < MAP_HEIGHT; i++) {
-        for (int j = 0; j < MAP_WIDTH; j++) {
+    for (int i = 0; i <= MAP_HEIGHT; i++) {
+        for (int j = 0; j <= MAP_WIDTH; j++) {
             if (*(map + i * MAP_WIDTH + j) == GAME_EMPTY) {
-                printf(" ");
+                display_string(" ");
             } else if (*(map + i * MAP_WIDTH + j) == GAME_WALL) {
-                printf("W");
+                display_string("W");
             } else if (*(map + i * MAP_WIDTH + j) == GAME_ROOM) {
-                printf("-");
+                display_string("-");
             } else if (*(map + i * MAP_WIDTH + j) == GAME_PATH) {
-                printf("#");
+                display_string("#");
             }
         }
-        printf("\n");
+        display_string("\n");
     }
 }
 
@@ -119,8 +131,8 @@ bool checkRoom(int* map , int sx, int sy, int ex, int ey)
 
 void generateMap(int* map)
 {
-    for (int i = 0; i < MAP_HEIGHT; i++) {
-        for (int j = 0; j < MAP_WIDTH; j++) {
+    for (int i = 0; i <= MAP_HEIGHT; i++) {
+        for (int j = 0; j <= MAP_WIDTH; j++) {
             *(map + i * MAP_WIDTH + j) = GAME_EMPTY;
         }
     }
