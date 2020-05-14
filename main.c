@@ -43,7 +43,7 @@ void printMap(int* map);
 
 
 
-
+// This program makes use of Klaus-Peter Zauner's lcd library which is included in the git repo
 int main()
 {
     CLKPR = (1 << CLKPCE);
