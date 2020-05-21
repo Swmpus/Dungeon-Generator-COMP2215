@@ -34,13 +34,13 @@
 
 int generateRandomNum(int lowest, int highest);
 
-int addRoomsToMap(int* map); // Returns number of doors added
+int addRoomsToMap(int* map, int* newDoors); // Returns number of doors added
 void fillMapWithEmpty(int* map);
 
 bool checkRoom(int* map, int sx, int sy, int ex, int ey);
 void drawRoom(int* map, int sx, int sy, int ex, int ey);
 
-void printView(int* map, int[] start);
+void printView(int* map, int start[2]);
 void printMap(int* map);
 
 
@@ -55,23 +55,24 @@ int main()
     srand(time(NULL));
 
     int* map = (int*)malloc(MAP_HEIGHT * MAP_WIDTH * sizeof(int));
-    int* doors;
-    int doorcount;
+    int* doors = malloc(sizeof(int));
+    int doorCount;
 
     //temporary
-    int[] viewStartLocation = int[2] { 0, 0 };
+    int viewStartLocation[2] = { 0, 0 };
 
     fillMapWithEmpty(map);
-	doorcount = addRoomsToMap(map);
+    doorCount = addRoomsToMap(map, doors);
 
-    printView(map, viewStartLocation);
+    printMap(map);
+    //printView(map, viewStartLocation);
     
     free(doors);
     free(map);
     return 0;
 }
 
-void printView(int* map, int[] start)
+void printView(int* map, int start[])
 { // Can fail to behave as expected if the map is larger than the screen
     for (int i = start[1]; i <= VIEW_HEIGHT; i++) {
         for (int j = start[0]; j <= VIEW_WIDTH; j++) {
@@ -123,43 +124,51 @@ int addRoomsToMap(int* map, int* newDoors)
         int roomEndY = roomStartY;
 
         do {
-            roomEndX = abs(generateRandomNum(roomStartX + 3, roomStartX + MAX_ROOM_WIDTH));
+            roomEndX = generateRandomNum(roomStartX + 3, roomStartX + MAX_ROOM_WIDTH);
         } while (roomEndX > MAP_WIDTH - 3);
         do {
-            roomEndY = abs(generateRandomNum(roomStartY + 3, roomStartY + MAX_ROOM_HEIGHT));
+            roomEndY = generateRandomNum(roomStartY + 3, roomStartY + MAX_ROOM_HEIGHT);
         } while (roomEndY > MAP_HEIGHT - 3);
 
-        if (checkRoom(map, roomStartX, roomStartY, roomEndX, roomEndY)) {
-            drawRoom(map, roomStartX, roomStartY, roomEndX, roomEndY);
-        }
         roomAttempts--;
+        
+	if (!checkRoom(map, roomStartX, roomStartY, roomEndX, roomEndY)) {
+	    continue;
+	}
+	drawRoom(map, roomStartX, roomStartY, roomEndX, roomEndY);
 
-        int numofDoors = generateRandomNum(1, 3);
-        int* oldDoors;
+        int numOfDoors = generateRandomNum(1, 3);
+        //int* oldDoors = malloc(sizeof(int));
 
         while (numOfDoors > 0) {
             int wall = generateRandomNum(0, 3);
             int position;
-            int[] newDoor;
+            int newDoor[2] = { 0, 0 };
 
             if (wall == 0) {
                 position = generateRandomNum(roomStartX + 1, roomEndX - 1);
-                newDoor = int[2] { position, roomStartY };
+                newDoor[0] = position;
+	        newDoor[1] = roomStartY;
             } else if (wall == 1) {
-                position = generateRandomNum(roomStarty + 1, roomEndy - 1);
-                newDoor = int[2] { roomEndX, position };
+                position = generateRandomNum(roomStartY + 1, roomEndY - 1);
+                newDoor[0] = roomEndX;
+		newDoor[1] = position;
             } else if (wall == 2) {
                 position = generateRandomNum(roomStartX + 1, roomEndX - 1);
-                newDoor = int[2] { position, roomEndY };
+                newDoor[0] = position;
+		newDoor[1] = roomEndY;
             } else if (wall == 3) {
-                position = generateRandomNum(roomStarty + 1, roomEndy - 1);
-                newDoor = int[2] { roomStartY, position };
+                position = generateRandomNum(roomStartY + 1, roomEndY - 1);
+                newDoor[0] = roomStartY;
+		newDoor[1] = position;
             }
             doorCount += 1;
             numOfDoors -= 1;
-            free(oldDoors);
-            *(map + newDoor[1] * MAP_WIDTH + newDoor[0]) = GAME_DOOR;
-
+            
+//	    free(oldDoors);
+            
+	    *(map + (newDoor[0] * MAP_WIDTH) + newDoor[1]) = GAME_DOOR;
+/*
             oldDoors = newDoors;
             newDoors = malloc(sizeof(int) * 2 * doorCount);
             for (int i = 0; i < doorCount - 1; i++) {
@@ -168,14 +177,8 @@ int addRoomsToMap(int* map, int* newDoors)
             }
             *(newDoors + (doorCount - 1) * sizeof(int) * 2) = newDoor[0];
             *(newDoors + (doorCount - 1) * sizeof(int) * 2 + sizeof(int)) = newDoor[1];
-        }
-        free(oldDoors);
-
-        return doorCount;
-    }
-
-    if (checkRoom(map, 40, 40, 50, 46)) {
-        drawRoom(map, 45, 41, 50, 46);
+        */
+	}
     }
     return doorCount;
 }
